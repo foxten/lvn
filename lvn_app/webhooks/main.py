@@ -51,7 +51,7 @@ def add_to_pbs(data):
         uid=data.uid,
     ).data
     (mvault_id, token) = register_user_on_pbs(
-        user.uid,
+        "lvn-" + user.uid,
         {
             "first_name": user.first_name,
             "last_name": user.last_name,
