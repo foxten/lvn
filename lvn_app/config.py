@@ -5,6 +5,7 @@ class Config(object):
     PIANO_APP_ID = os.environ.get('PIANO_APP_ID')
     PIANO_API_TOKEN = os.environ.get("PIANO_API_TOKEN")
     PIANO_PRIVATE_KEY = os.environ.get("PIANO_PRIVATE_KEY")
+    LV_PLUS_RESOURCE_ID = os.environ.get("LV_PLUS_RESOURCE_ID")
     MVAULT_USERNAME = os.environ.get("MVAULT_USERNAME")
     MVAULT_PASSWORD = os.environ.get("MVAULT_PASSWORD")
     MVAULT_STATION_ID = os.environ.get("MVAULT_STATION_ID")

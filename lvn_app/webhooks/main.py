@@ -65,6 +65,6 @@ def add_to_pbs(data):
 
 def process_data(data):
     webhook_data = PIANO_CLIENT.parse_webhook_data(data)
-    if webhook_data.event == 'new_purchase' and webhook_data.term_id == 'TM6WMGPJ2W0A':
+    if webhook_data.event == 'new_purchase' and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
         add_to_pbs(webhook_data)
     return "User Registered to Mvault Successfully"
