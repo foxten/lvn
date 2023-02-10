@@ -7,8 +7,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-MVAULT_API = 'https://mvault-services-staging.digi-preprod.pbs.org/api/' if Config.MODE == 'dev' else ''
-
 @app.route('/webhooks')
 def webhooks():
     response = process_data(request.args["data"])

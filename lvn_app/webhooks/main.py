@@ -4,8 +4,7 @@ from datetime import datetime
 import requests
 import json
 
-HOST = 'sandbox'
-PIANO_CLIENT = Client(api_host=HOST, api_token=Config.PIANO_API_TOKEN, private_key=Config.PIANO_PRIVATE_KEY)
+PIANO_CLIENT = Client(api_host=Config.PIANO_HOST, api_token=Config.PIANO_API_TOKEN, private_key=Config.PIANO_PRIVATE_KEY)
 
 """
 Takes the Mvault ID and Token String returned from the Mvault API and
