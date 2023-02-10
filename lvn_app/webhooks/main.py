@@ -14,7 +14,8 @@ so we're contacting the API directly here.
 """
 def add_mvault_and_token_to_piano_user(mvault_id: str, token: str, user_id: str):
     requests.post(
-        url="https://sandbox.piano.io/api/v3/publisher/user/update?aid="
+        url=Config.PIANO_API_URL
+            +"/api/v3/publisher/user/update?aid="
             +Config.PIANO_APP_ID
             +"&api_token="+Config.PIANO_API_TOKEN+"&uid="+user_id,
         headers={'Content-type': 'application/json'},
@@ -64,6 +65,7 @@ def add_to_pbs(data):
 
 def process_data(data):
     webhook_data = PIANO_CLIENT.parse_webhook_data(data)
-    if (webhook_data.event == 'new_purchase' or webhook_data.event == 'free_access_granted') and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
+    webhook_events = Config.PIANO_WEBHOOK_EVENTS.split(",")
+    if webhook_data.event in webhook_events and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
         add_to_pbs(webhook_data)
     return "User Registered to Mvault Successfully"
