@@ -7,6 +7,10 @@ load_dotenv()
 
 app = Flask(__name__)
 
+@app.route("/")
+def index():
+    return "Hi the LVN server is running"
+    
 @app.route('/webhooks')
 def webhooks():
     response = process_data(request.args["data"])
