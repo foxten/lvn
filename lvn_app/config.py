@@ -2,7 +2,7 @@ import os
 
 class Config(object):
     MODE = os.environ.get('MODE')
-    PIANGO_HOST = os.environ.get('PIANO_HOST')
+    PIANO_HOST = os.environ.get('PIANO_HOST')
     PIANO_APP_ID = os.environ.get('PIANO_APP_ID')
     PIANO_API_TOKEN = os.environ.get("PIANO_API_TOKEN")
     PIANO_PRIVATE_KEY = os.environ.get("PIANO_PRIVATE_KEY")
