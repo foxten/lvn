@@ -107,4 +107,5 @@ def process_data(data):
     # if webhook_data.event in webhook_events and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
     if (webhook_data.event == 'new_purchase' or webhook_data.event == 'free_access_granted') and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
         add_to_pbs(webhook_data)
+        add_to_campaign_monitor(webhook_data)
     return "User Registered to Mvault Successfully"
