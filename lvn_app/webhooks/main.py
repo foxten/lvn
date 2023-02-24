@@ -63,9 +63,47 @@ def add_to_pbs(data):
     )
     add_mvault_and_token_to_piano_user(mvault_id, token, user.uid)
 
+"""
+Adds the user to the appropriate lists on campaign monitor
+"""
+def add_to_campaign_monitor(data):
+    user = PIANO_CLIENT.publisher_user_api.get(
+        aid=data.aid,
+        uid=data.uid,
+    ).data
+
+    # TODO determine which list we are adding to
+    requests.post(
+        url=Config.CAMPAIGN_MONITOR_API_URL
+            + "/subscribers/"
+            + Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST
+            + ".json",
+        headers={'Content-type': 'application/json'},
+        auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
+        data=json.dumps({
+            "EmailAddress": user.email,
+            "Name": user.personal_name,
+            "CustomFields": [
+                {
+                    "Key": "piano_uid",
+                    "Value": data.uid
+                },
+            ],
+            "Resubscribe": True,
+            "RestartSubscriptionBasedAutoresponders": True,
+        })
+    )
+
+"""
+Adds the user to the correct list on piano ESP
+"""
+def add_to_piano_esp(data):
+    # TODO add this user to the lists on piano esp
+    pass
+
 def process_data(data):
+    # TODO Determine where this webhook is coming from: Piano? Piano ESP? Campaign Monitor?
     webhook_data = PIANO_CLIENT.parse_webhook_data(data)
-    webhook_events = Config.PIANO_WEBHOOK_EVENTS.split(",")
     # if webhook_data.event in webhook_events and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
     if (webhook_data.event == 'new_purchase' or webhook_data.event == 'free_access_granted') and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
         add_to_pbs(webhook_data)
