@@ -73,10 +73,6 @@ def add_to_campaign_monitor(data):
     ).data
 
     # TODO determine which list we are adding to
-    print(Config.CAMPAIGN_MONITOR_API_URL
-            + "/subscribers/"
-            + Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST
-            + ".json")
     response = requests.post(
         url=Config.CAMPAIGN_MONITOR_API_URL
             + "/subscribers/"
@@ -95,6 +91,7 @@ def add_to_campaign_monitor(data):
             ],
             "Resubscribe": True,
             "RestartSubscriptionBasedAutoresponders": True,
+            "ConsentToTrack": "Unchanged",
         })
     )
     print(response)
