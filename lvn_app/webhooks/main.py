@@ -73,7 +73,7 @@ def add_to_campaign_monitor(data):
     ).data
 
     # TODO determine which list we are adding to
-    requests.post(
+    response = requests.post(
         url=Config.CAMPAIGN_MONITOR_API_URL
             + "/subscribers/"
             + Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST
@@ -93,6 +93,7 @@ def add_to_campaign_monitor(data):
             "RestartSubscriptionBasedAutoresponders": True,
         })
     )
+    print(response)
 
 """
 Adds the user to the correct list on piano ESP
