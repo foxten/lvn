@@ -85,6 +85,14 @@ def add_to_campaign_monitor(data):
             "Name": user.personal_name,
             "CustomFields": [
                 {
+                    "Key": "firstname",
+                    "Value": user.first_name
+                },
+                {
+                    "Key": "lastname",
+                    "Value": user.last_name
+                },
+                {
                     "Key": "piano_uid",
                     "Value": data.uid
                 },
@@ -94,7 +102,6 @@ def add_to_campaign_monitor(data):
             "ConsentToTrack": "Unchanged",
         })
     )
-    print(response)
 
 """
 Adds the user to the correct list on piano ESP
