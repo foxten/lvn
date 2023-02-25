@@ -2,6 +2,7 @@ import os
 
 class Config(object):
     MODE = os.environ.get('MODE')
+    APP_WEBHOOKS_URL = os.environ.get('APP_WEBHOOKS_URL')
     PIANO_API_URL = os.environ.get("PIANO_API_URL")
     PIANO_HOST = os.environ.get('PIANO_HOST')
     PIANO_APP_ID = os.environ.get('PIANO_APP_ID')
