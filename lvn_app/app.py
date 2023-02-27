@@ -1,21 +1,29 @@
 from flask import Flask, request
-from lvn_app.webhooks.main import process_data, register_campaign_monitor_webhook
+from lvn_app.webhooks.main import *
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def index():
     return "Hi the LVN server is running"
-    
-@app.route('/webhooks')
+
+
+@app.route('/webhooks', methods=['GET', 'POST'])
 def webhooks():
-    print(request.headers)
-    response = process_data(request.args["data"])
-    print(f'Webhook event: {response}')
-    return response
+    # Piano puts webhooks data as a query parameter in a GET request
+    # https://docs.piano.io/webhooks/
+    if request.method == 'GET':
+        return process_piano_webhook(request)
+
+    # Campaign monitor uses a POST webhook
+    # https://www.campaignmonitor.com/api/v3-3/webhooks/
+    elif request.method == 'POST':
+        return process_campaign_monitor_webhook(request)
+
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True)
