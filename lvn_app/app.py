@@ -26,5 +26,5 @@ def webhooks():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, use_reloader=True)
     register_campaign_monitor_webhook()
+    app.run(debug=True, use_reloader=True)
