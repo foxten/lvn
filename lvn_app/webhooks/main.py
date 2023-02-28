@@ -147,9 +147,9 @@ def add_to_piano_esp(user, list_id):
                 params={'api_key': Config.PIANO_ESP_API_KEY},
                 headers={'Content-type': 'application/json'},
                 data=json.dumps([
-                    {"user": user.uid, "umf": "FIRSTNAME", "value": user.first_name},
-                    {"user": user.uid, "umf": "LASTNAME", "value": user.last_name},
-                    {"user": user.uid, "umf": "PERSONALNAME", "value": user.personal_name}
+                    {"user": user.email, "umf": "FIRSTNAME", "value": user.first_name},
+                    {"user": user.email, "umf": "LASTNAME", "value": user.last_name},
+                    {"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name}
                 ])
             )
             if resp2.ok:
