@@ -64,13 +64,13 @@ def register_user_on_pbs(user_id: str, register_data):
         data=json.dumps(register_data)
     )
     if resp.ok:
-        print('Successfully added user ' + register_data.email + ' to pbs passport')
+        print('Successfully added user ' + register_data['email'] + ' to pbs passport')
         response_dict = json.loads(resp.content)
         mvault_id = response_dict["mvault_id"]
         activation_token = response_dict["token"]
         return mvault_id, activation_token
     else:
-        print('Could not add user ' + register_data.email + ' to pbs passport')
+        print('Could not add user ' + register_data['email'] + ' to pbs passport')
         print(resp.content, file=sys.stderr)
     return None, None
 
