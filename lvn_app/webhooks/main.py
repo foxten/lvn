@@ -41,7 +41,10 @@ def add_mvault_and_token_to_piano_user(mvault_id: str, token: str, user):
             params={'email': user.email},
             headers={'Content-type': 'application/json'},
             auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
-            data=json.dumps({"CustomFields": [{"Key": "passport-auth", "Value": token}]})
+            data=json.dumps({
+                "CustomFields": [{"Key": "passport-auth", "Value": token}],
+                "ConsentToTrack": "Unchanged",
+            })
         )
         if resp.ok:
             print('Successfully added passport auth token ' + token + ' to user ' + user.uid + ' in campaign monitor')
