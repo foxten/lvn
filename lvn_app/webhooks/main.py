@@ -68,11 +68,11 @@ def register_user_on_pbs(user_id: str, register_data):
         response_dict = json.loads(resp.content)
         mvault_id = response_dict["mvault_id"]
         activation_token = response_dict["token"]
-        return mvault_id, activation_token
+        return (mvault_id, activation_token)
     else:
         print('Could not add user ' + register_data.email + ' to pbs passport')
         print(resp.content, file=sys.stderr)
-    return None, None
+    return (None, None)
 
 
 def add_to_pbs(user):
@@ -137,7 +137,7 @@ def add_to_piano_esp(user, list_id):
             url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
             params={'api_key': Config.PIANO_ESP_API_KEY},
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            data=({"email": user.email, "mlids": [list_id]})
+            data=({"email": user.email, "mlids": [list_id.split(',')]})
         )
         if resp.ok:
             print('Successfully registered ' + user.email + ' to piano esp list ' + list_id)
