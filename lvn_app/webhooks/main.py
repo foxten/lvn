@@ -68,7 +68,6 @@ def register_user_on_pbs(user_id: str, register_data):
         response_dict = json.loads(resp.content)
         mvault_id = response_dict["mvault_id"]
         activation_token = response_dict["token"]
-        print(mvault_id, activation_token)
         return mvault_id, activation_token
     else:
         print('Could not add user ' + register_data.email + ' to pbs passport')
@@ -138,7 +137,7 @@ def add_to_piano_esp(user, list_id):
             url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
             params={'api_key': Config.PIANO_ESP_API_KEY},
             headers={'Content-type': 'application/x-www-form-urlencoded'},
-            data=({"email": user.email, "mlids": [list_id.split(',')]})
+            data=({"email": user.email, "mlids": list_id})
         )
         if resp.ok:
             print('Successfully registered ' + user.email + ' to piano esp list ' + list_id)
@@ -146,8 +145,8 @@ def add_to_piano_esp(user, list_id):
             resp2 = requests.post(
                 url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
                 params={'api_key': Config.PIANO_ESP_API_KEY},
-                headers={'Content-type': 'application/x-www-form-urlencoded'},
-                data=([
+                headers={'Content-type': 'application/json'},
+                data=json.dumps([
                     {"user": user.uid, "umf": "FIRSTNAME", "value": user.first_name},
                     {"user": user.uid, "umf": "LASTNAME", "value": user.last_name},
                     {"user": user.uid, "umf": "PERSONALNAME", "value": user.personal_name}
