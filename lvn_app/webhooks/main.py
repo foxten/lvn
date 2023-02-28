@@ -57,16 +57,22 @@ def register_user_on_pbs(user_id: str, register_data):
     """
     Takes the user info from Piano and registers them on MVault.
     """
-    response = requests.put(
+    resp = requests.put(
         url=Config.MVAULT_API + "memberships/" + user_id + "/",
         auth=(Config.MVAULT_KEY, Config.MVAULT_SECRET),
         headers={'Content-type': 'application/json'},
         data=json.dumps(register_data)
     )
-    response_dict = json.loads(response.content)
-    mvault_id = response_dict["mvault_id"]
-    activation_token = response_dict["token"]
-    return (mvault_id, activation_token)
+    if resp.ok:
+        print('Successfully added user ' + register_data.email + ' to pbs passport')
+        response_dict = json.loads(resp.content)
+        mvault_id = response_dict["mvault_id"]
+        activation_token = response_dict["token"]
+        return mvault_id, activation_token
+    else:
+        print('Could not add user ' + register_data.email + ' to pbs passport')
+        print(resp.content, file=sys.stderr)
+    return None, None
 
 
 def add_to_pbs(user):
@@ -86,7 +92,8 @@ def add_to_pbs(user):
                                                   microsecond=0).isoformat() + 'Z'
         }
     )
-    add_mvault_and_token_to_piano_user(mvault_id, token, user)
+    if mvault_id:
+        add_mvault_and_token_to_piano_user(mvault_id, token, user)
 
 
 def add_to_campaign_monitor(data, user, list_id):
@@ -117,7 +124,7 @@ def add_to_campaign_monitor(data, user, list_id):
         if resp.ok:
             print('Successfully registered ' + user.email + ' to campaign monitor list ' + list_id)
         else:
-            print('Registering ' + user.email + ' to campaign monitor list ' + list_id + ' failed.', file=sys.stderr)
+            print('Registering ' + user.email + ' to campaign monitor list ' + list_id + ' failed', file=sys.stderr)
             print(resp.content, file=sys.stderr)
 
 
@@ -127,14 +134,31 @@ def add_to_piano_esp(user, list_id):
     """
     if Config.PIANO_ESP_API_URL:
         resp = requests.post(
-            url=Config.PIANO_ESP_API_URL + "/tracker/securesub?api_key=" + Config.PIANO_ESP_API_KEY,
+            url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
+            params={'api_key': Config.PIANO_ESP_API_KEY},
             headers={'Content-type': 'application/x-www-form-urlencoded'},
             data=({"email": user.email, "mlids": [list_id]})
         )
         if resp.ok:
             print('Successfully registered ' + user.email + ' to piano esp list ' + list_id)
+            # Add merge fields
+            resp2 = requests.post(
+                url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
+                params={'api_key': Config.PIANO_ESP_API_KEY},
+                headers={'Content-type': 'application/x-www-form-urlencoded'},
+                data=([
+                    {"user": user.uid, "umf": "FIRSTNAME", "value": user.first_name},
+                    {"user": user.uid, "umf": "LASTNAME", "value": user.last_name},
+                    {"user": user.uid, "umf": "PERSONALNAME", "value": user.personal_name}
+                ])
+            )
+            if resp2.ok:
+                print('Successfully added merge fields to ' + user.email + ' in piano esp')
+            else:
+                print('Adding merge fields to ' + user.email + ' in piano esp failed', file=sys.stderr)
+                print(resp2.content, file=sys.stderr)
         else:
-            print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed.', file=sys.stderr)
+            print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed', file=sys.stderr)
             print(resp.content, file=sys.stderr)
 
 
@@ -160,7 +184,7 @@ def register_campaign_monitor_webhook():
         if resp.ok:
             print('Successfully registered unsubscribe webhook with Campaign Monitor.')
         else:
-            print('Registering unsubscribe webhook with Campaign Monitor failed.', file=sys.stderr)
+            print('Registering unsubscribe webhook with Campaign Monitor failed', file=sys.stderr)
             print(resp.content, file=sys.stderr)
     else:
         print('APP_WEBHOOKS_URL env variable not set.', file=sys.stderr)
