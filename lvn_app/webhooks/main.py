@@ -223,4 +223,6 @@ def process_piano_webhook(request):
 
 
 def process_campaign_monitor_webhook(request):
-    pass
+    # Campaign monitor sends a list of events that we loop through and handle
+    request_data = request.get_json()
+    print(request_data['Events'])
