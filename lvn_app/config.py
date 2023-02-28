@@ -9,6 +9,7 @@ class Config(object):
     PIANO_API_TOKEN = os.environ.get("PIANO_API_TOKEN")
     PIANO_PRIVATE_KEY = os.environ.get("PIANO_PRIVATE_KEY")
     PIANO_ESP_API_URL = os.environ.get("PIANO_ESP_API_URL")
+    PIANO_ESP_API_KEY = os.environ.get("PIANO_ESP_API_KEY")
     PIANO_ESP_REGISTERED_USERS_LIST = os.environ.get("PIANO_ESP_REGISTERED_USERS_LIST")
     PIANO_ESP_PLUS_USERS_LIST = os.environ.get("PIANO_ESP_PLUS_USERS_LIST")
     LV_PLUS_RESOURCE_ID = os.environ.get("LV_PLUS_RESOURCE_ID")
