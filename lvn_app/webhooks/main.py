@@ -162,6 +162,27 @@ def add_to_piano_esp(user, list_id):
             print(resp.content, file=sys.stderr)
 
 
+def remove_from_piano_esp(email):
+    """
+    Removes the user from all lists on piano ESP
+    """
+    if Config.PIANO_ESP_API_URL:
+        resp = requests.delete(
+            url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
+            params={'api_key': Config.PIANO_ESP_API_KEY},
+            headers={'Content-type': 'application/x-www-form-urlencoded'},
+            data=({
+                "email": email,
+                "mlids": Config.PIANO_ESP_REGISTERED_USERS_LIST + ',' + Config.PIANO_ESP_PLUS_USERS_LIST
+            })
+        )
+        if resp.ok:
+            print('Successfully unsubscribed ' + email + ' from piano esp')
+        else:
+            print('Unsubscribing ' + email + ' from piano esp failed', file=sys.stderr)
+            print(resp.content, file=sys.stderr)
+
+
 def register_campaign_monitor_webhook():
     """
     Registers the webhook on Campaign Monitor
@@ -182,12 +203,12 @@ def register_campaign_monitor_webhook():
             })
         )
         if resp.ok:
-            print('Successfully registered unsubscribe webhook with Campaign Monitor.')
+            print('Successfully registered unsubscribe webhook with Campaign Monitor')
         else:
             print('Registering unsubscribe webhook with Campaign Monitor failed', file=sys.stderr)
             print(resp.content, file=sys.stderr)
     else:
-        print('APP_WEBHOOKS_URL env variable not set.', file=sys.stderr)
+        print('APP_WEBHOOKS_URL env variable not set', file=sys.stderr)
 
 
 def process_piano_webhook(request):
@@ -225,4 +246,8 @@ def process_piano_webhook(request):
 def process_campaign_monitor_webhook(request):
     # Campaign monitor sends a list of events that we loop through and handle
     request_data = request.get_json()
-    print(request_data['Events'])
+    for event in request_data['Events']:
+        if event['Type'] == 'Deactivate':
+            remove_from_piano_esp(event['EmailAddress'])
+
+    return "Success"
