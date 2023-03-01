@@ -4,6 +4,7 @@ from datetime import datetime
 import requests
 import json
 import sys
+import time
 
 PIANO_CLIENT = Client(api_host=Config.PIANO_HOST, api_token=Config.PIANO_API_TOKEN,
                       private_key=Config.PIANO_PRIVATE_KEY)
@@ -183,17 +184,44 @@ def remove_from_piano_esp(email):
             print(resp.content, file=sys.stderr)
 
 
-def register_campaign_monitor_webhook():
+def register_campaign_monitor_webhook(cm_list):
     """
     Registers the webhook on Campaign Monitor
     https://www.campaignmonitor.com/api/v3-3/lists/#creating-a-webhook
     """
     if Config.APP_WEBHOOKS_URL:
+        # Get and clear all existing webhooks
+        resp = requests.get(
+            url=Config.CAMPAIGN_MONITOR_API_URL + "/lists/" + cm_list + "/webhooks.json",
+            headers={'Content-type': 'application/json'},
+            auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x')
+        )
+        if resp.ok:
+            webhooks = json.loads(resp.content)
+            for webhook in webhooks:
+                resp2 = requests.delete(
+                    url=Config.CAMPAIGN_MONITOR_API_URL + "/lists/" + cm_list + "/webhooks/" + webhook['WebhookID'] + ".json",
+                    headers={'Content-type': 'application/json'},
+                    auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x')
+                )
+                if resp2.ok:
+                    print('Successfully deleted unsubscribe webhook ' + webhook['WebhookID']
+                          + ' on Campaign Monitor on list ' + cm_list)
+                else:
+                    print('Deleting unsubscribe webhook ' + webhook['WebhookID']
+                          + ' on Campaign Monitor on list ' + cm_list + ' failed')
+                    print(resp2.content, file=sys.stderr)
+
+        else:
+            print('Getting webhooks on Campaign Monitor on list ' + cm_list + ' failed', file=sys.stderr)
+            print(resp.content, file=sys.stderr)
+
+        # Sleep for 10 second to allow other workers to boot
+        time.sleep(10)
+
+        # Create webhook
         resp = requests.post(
-            url=Config.CAMPAIGN_MONITOR_API_URL
-                + "/lists/"
-                + Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST
-                + "/webhooks.json",
+            url=Config.CAMPAIGN_MONITOR_API_URL + "/lists/" + cm_list + "/webhooks.json",
             headers={'Content-type': 'application/json'},
             auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
             data=json.dumps({
@@ -203,9 +231,9 @@ def register_campaign_monitor_webhook():
             })
         )
         if resp.ok:
-            print('Successfully registered unsubscribe webhook with Campaign Monitor')
+            print('Successfully registered unsubscribe webhook with Campaign Monitor on list ' + cm_list)
         else:
-            print('Registering unsubscribe webhook with Campaign Monitor failed', file=sys.stderr)
+            print('Registering unsubscribe webhook with Campaign Monitor failed on list ' + cm_list, file=sys.stderr)
             print(resp.content, file=sys.stderr)
     else:
         print('APP_WEBHOOKS_URL env variable not set', file=sys.stderr)

@@ -30,4 +30,8 @@ if __name__ == '__main__':
 
 
 # Register the webhooks we need
-register_campaign_monitor_webhook()
+for campaign_monitor_list in [
+    Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST,
+    Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST
+]:
+    register_campaign_monitor_webhook(campaign_monitor_list)
