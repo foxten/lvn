@@ -265,6 +265,8 @@ def process_piano_webhook(request):
 
         # TODO if this is an unsubscribe
         # TODO if user changed email / name / other details
+        # TODO free registered user webhook and lists
+        # TODO registered user upgrade
     except ValueError as e:
         print(e, file=sys.stderr)
 
