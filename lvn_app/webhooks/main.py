@@ -209,7 +209,7 @@ def register_campaign_monitor_webhook(cm_list):
                     print('Successfully deleted unsubscribe webhook ' + webhook['WebhookID']
                           + ' on Campaign Monitor on list ' + cm_list)
                 # else if an error, but not the error that it doesn't exist (code 699)
-                elif response_dict.Code is not 699:
+                elif response_dict['Code'] is not 699:
                     print('Deleting unsubscribe webhook ' + webhook['WebhookID']
                           + ' on Campaign Monitor on list ' + cm_list + ' failed')
                     print(resp2.content, file=sys.stderr)
