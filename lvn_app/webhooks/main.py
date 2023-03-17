@@ -204,12 +204,11 @@ def register_campaign_monitor_webhook(cm_list):
                     headers={'Content-type': 'application/json'},
                     auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x')
                 )
-                response_dict = json.loads(resp2.content)
                 if resp2.ok:
                     print('Successfully deleted unsubscribe webhook ' + webhook['WebhookID']
                           + ' on Campaign Monitor on list ' + cm_list)
                 # else if an error, but not the error that it doesn't exist (code 699)
-                elif response_dict['Code'] != 699:
+                elif json.loads(resp2.content)['Code'] != 699:
                     print('Deleting unsubscribe webhook ' + webhook['WebhookID']
                           + ' on Campaign Monitor on list ' + cm_list + ' failed')
                     print(resp2.content, file=sys.stderr)
