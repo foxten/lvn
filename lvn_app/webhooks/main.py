@@ -207,7 +207,9 @@ def register_campaign_monitor_webhook(cm_list):
                 if resp2.ok:
                     print('Successfully deleted unsubscribe webhook ' + webhook['WebhookID']
                           + ' on Campaign Monitor on list ' + cm_list)
-                else:
+                response_dict = json.loads(resp2.content)
+                # else if an error, but not the error that it doesn't exist (code 699)
+                else if response_dict.Code is not 699:
                     print('Deleting unsubscribe webhook ' + webhook['WebhookID']
                           + ' on Campaign Monitor on list ' + cm_list + ' failed')
                     print(resp2.content, file=sys.stderr)
@@ -265,6 +267,11 @@ def process_piano_webhook(request):
             return "User Registered Successfully"
 
         # TODO if this is an unsubscribe
+        # Note: The only way to set up a piano esp webhook url is to email them. Currently,
+        # they are set to:
+        # production: https://lvn-ux-server.herokuapp.com/webhooks
+        # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
+
         # TODO if user changed email / name / other details
         # TODO registered user upgrade
     except ValueError as e:
