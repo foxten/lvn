@@ -246,8 +246,9 @@ def process_piano_webhook(request):
         # Get the user data from the piano api
         user = PIANO_CLIENT.publisher_user_api.get(aid=webhook_data.aid, uid=webhook_data.uid).data
 
+        print('Received piano webhook for ' + webhook_data.event)
         # See if the event is a new registration
-        if webhook_data.event in ['new_purchase', 'free_access_granted']:
+        if webhook_data.event in ['new_purchase', 'free_access_granted', 'user_created']:
             if webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
                 if Config.PIANO_ESP_PLUS_USERS_LIST:
                     add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
@@ -265,7 +266,6 @@ def process_piano_webhook(request):
 
         # TODO if this is an unsubscribe
         # TODO if user changed email / name / other details
-        # TODO free registered user webhook and lists
         # TODO registered user upgrade
     except ValueError as e:
         print(e, file=sys.stderr)
