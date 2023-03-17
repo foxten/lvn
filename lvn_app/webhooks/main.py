@@ -249,7 +249,7 @@ def process_piano_webhook(request):
         print('Received piano webhook for ' + webhook_data.event)
         # See if the event is a new registration
         if webhook_data.event in ['new_purchase', 'free_access_granted', 'user_created']:
-            if webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
+            if hasattr(webhook_data, 'rid') and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
                 if Config.PIANO_ESP_PLUS_USERS_LIST:
                     add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
                 if Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST:
