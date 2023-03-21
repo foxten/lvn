@@ -138,20 +138,34 @@ def unsubscribe_from_campaign_monitor(email):
             Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST,
             Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST
         ]:
-            resp = requests.post(
+            # Check if subscribed
+            subscribed_resp = requests.get(
                 url=Config.CAMPAIGN_MONITOR_API_URL
                     + "/subscribers/"
                     + campaign_monitor_list
-                    + "/unsubscribe.json",
+                    + ".json",
+                params={'email': email},
                 headers={'Content-type': 'application/json'},
                 auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
-                data=json.dumps({"EmailAddress": email})
             )
-            if resp.ok:
-                print('Successfully unsubscribed ' + email + ' to campaign monitor list ' + campaign_monitor_list)
-            else:
-                print('Unsubscribing ' + email + ' to campaign monitor list ' + campaign_monitor_list + ' failed', file=sys.stderr)
-                print(resp.content, file=sys.stderr)
+            if subscribed_resp.ok:
+                subscribed = json.loads(subscribed_resp.content)
+                if 'State' in subscribed.keys() and subscribed['State'] == 'Active':
+                    # Only unsubscribe if subscribed
+                    resp = requests.post(
+                        url=Config.CAMPAIGN_MONITOR_API_URL
+                            + "/subscribers/"
+                            + campaign_monitor_list
+                            + "/unsubscribe.json",
+                        headers={'Content-type': 'application/json'},
+                        auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
+                        data=json.dumps({"EmailAddress": email})
+                    )
+                    if resp.ok:
+                        print('Successfully unsubscribed ' + email + ' to campaign monitor list ' + campaign_monitor_list)
+                    else:
+                        print('Unsubscribing ' + email + ' to campaign monitor list ' + campaign_monitor_list + ' failed', file=sys.stderr)
+                        print(resp.content, file=sys.stderr)
 
 
 def add_to_piano_esp(user, list_id):
@@ -193,13 +207,24 @@ def unsubscribe_from_piano_esp(email):
     Removes the user from all lists on piano ESP
     """
     if Config.PIANO_ESP_API_URL:
+        # Check if subscribed
+        all_mlids = (Config.PIANO_ESP_REGISTERED_USERS_LIST + ',' + Config.PIANO_ESP_PLUS_USERS_LIST).split(',')
+        subscribed_mlids = []
+        for mlid in all_mlids:
+            subscribed_resp = requests.get(
+                url=Config.PIANO_ESP_API_URL + "/tracker/securesub/email/" + email + "/ml/" + mlid,
+                params={'api_key': Config.PIANO_ESP_API_KEY},
+            )
+            if subscribed_resp.ok:
+                subscribed_mlids.append(mlid)
+
         resp = requests.delete(
             url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
             params={'api_key': Config.PIANO_ESP_API_KEY},
             headers={'Content-type': 'application/x-www-form-urlencoded'},
             data=({
                 "email": email,
-                "mlids": Config.PIANO_ESP_REGISTERED_USERS_LIST + ',' + Config.PIANO_ESP_PLUS_USERS_LIST
+                "mlids": ','.join(subscribed_mlids)
             })
         )
         if resp.ok:
@@ -293,7 +318,6 @@ def process_piano_webhook(request):
                 return "User Registered Successfully"
 
             # TODO if user changed email / name / other details
-            # TODO registered user upgrade
         except ValueError as e:
             print(e, file=sys.stderr)
 
