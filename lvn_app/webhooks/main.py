@@ -129,6 +129,31 @@ def add_to_campaign_monitor(data, user, list_id):
             print(resp.content, file=sys.stderr)
 
 
+def unsubscribe_from_campaign_monitor(email):
+    """
+    Unsubscribes the user to the appropriate lists on campaign monitor
+    """
+    if Config.CAMPAIGN_MONITOR_API_URL:
+        for campaign_monitor_list in [
+            Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST,
+            Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST
+        ]:
+            resp = requests.post(
+                url=Config.CAMPAIGN_MONITOR_API_URL
+                    + "/subscribers/"
+                    + campaign_monitor_list
+                    + "/unsubscribe.json",
+                headers={'Content-type': 'application/json'},
+                auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
+                data=json.dumps({"EmailAddress": email})
+            )
+            if resp.ok:
+                print('Successfully unsubscribed ' + email + ' to campaign monitor list ' + campaign_monitor_list)
+            else:
+                print('Unsubscribing ' + email + ' to campaign monitor list ' + campaign_monitor_list + ' failed', file=sys.stderr)
+                print(resp.content, file=sys.stderr)
+
+
 def add_to_piano_esp(user, list_id):
     """
     Adds the user to the correct list on piano ESP
@@ -163,7 +188,7 @@ def add_to_piano_esp(user, list_id):
             print(resp.content, file=sys.stderr)
 
 
-def remove_from_piano_esp(email):
+def unsubscribe_from_piano_esp(email):
     """
     Removes the user from all lists on piano ESP
     """
@@ -280,7 +305,8 @@ def process_piano_webhook(request):
     # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
     elif request.method == 'POST':
         request_data = request.get_json()
-        print(request_data)
+        if 'user_removed' in request_data.keys():
+            unsubscribe_from_campaign_monitor(request_data['email'])
 
     return "Webhook failed"
 
@@ -290,6 +316,6 @@ def process_campaign_monitor_webhook(request):
     request_data = request.get_json()
     for event in request_data['Events']:
         if event['Type'] == 'Deactivate':
-            remove_from_piano_esp(event['EmailAddress'])
+            unsubscribe_from_piano_esp(event['EmailAddress'])
 
     return "Success"
