@@ -150,6 +150,7 @@ def unsubscribe_from_campaign_monitor(email):
             )
             if subscribed_resp.ok:
                 subscribed = json.loads(subscribed_resp.content)
+                print(subscribed)
                 if 'State' in subscribed.keys() and subscribed['State'] == 'Active':
                     # Only unsubscribe if subscribed
                     resp = requests.post(
