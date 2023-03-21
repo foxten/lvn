@@ -218,20 +218,21 @@ def unsubscribe_from_piano_esp(email):
             if subscribed_resp.ok:
                 subscribed_mlids.append(mlid)
 
-        resp = requests.delete(
-            url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
-            params={'api_key': Config.PIANO_ESP_API_KEY},
-            headers={'Content-type': 'application/x-www-form-urlencoded'},
-            data=({
-                "email": email,
-                "mlids": ','.join(subscribed_mlids)
-            })
-        )
-        if resp.ok:
-            print('Successfully unsubscribed ' + email + ' from piano esp')
-        else:
-            print('Unsubscribing ' + email + ' from piano esp failed', file=sys.stderr)
-            print(resp.content, file=sys.stderr)
+        if len(subscribed_mlids) > 0:
+            resp = requests.delete(
+                url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
+                params={'api_key': Config.PIANO_ESP_API_KEY},
+                headers={'Content-type': 'application/x-www-form-urlencoded'},
+                data=({
+                    "email": email,
+                    "mlids": ','.join(subscribed_mlids)
+                })
+            )
+            if resp.ok:
+                print('Successfully unsubscribed ' + email + ' from piano esp')
+            else:
+                print('Unsubscribing ' + email + ' from piano esp failed', file=sys.stderr)
+                print(resp.content, file=sys.stderr)
 
 
 def register_campaign_monitor_webhook(cm_list):
