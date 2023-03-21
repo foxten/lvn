@@ -241,42 +241,46 @@ def register_campaign_monitor_webhook(cm_list):
 
 
 def process_piano_webhook(request):
-    try:
-        webhook_data = PIANO_CLIENT.parse_webhook_data(request.args["data"])
+    # Piano Webhook
+    if request.method == 'GET':
+        try:
+            webhook_data = PIANO_CLIENT.parse_webhook_data(request.args["data"])
 
-        # Get the user data from the piano api
-        user = PIANO_CLIENT.publisher_user_api.get(aid=webhook_data.aid, uid=webhook_data.uid).data
+            # Get the user data from the piano api
+            user = PIANO_CLIENT.publisher_user_api.get(aid=webhook_data.aid, uid=webhook_data.uid).data
 
-        print('Received piano webhook for ' + webhook_data.event)
-        # See if the event is a new registration
-        if webhook_data.event in ['new_purchase', 'free_access_granted', 'user_created']:
-            if hasattr(webhook_data, 'rid') and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
-                if Config.PIANO_ESP_PLUS_USERS_LIST:
-                    add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
-                if Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST:
-                    add_to_campaign_monitor(webhook_data, user, Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST)
-                # If this user is newly registered to lv+, we also add to pbs passport
-                add_to_pbs(user)
+            print('Received piano webhook for ' + webhook_data.event)
+            # See if the event is a new registration
+            if webhook_data.event in ['new_purchase', 'free_access_granted', 'user_created']:
+                if hasattr(webhook_data, 'rid') and webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
+                    if Config.PIANO_ESP_PLUS_USERS_LIST:
+                        add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
+                    if Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST:
+                        add_to_campaign_monitor(webhook_data, user, Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST)
+                    # If this user is newly registered to lv+, we also add to pbs passport
+                    add_to_pbs(user)
 
-            # Adds this user to the registered users list
-            if Config.PIANO_ESP_REGISTERED_USERS_LIST:
-                add_to_piano_esp(user, Config.PIANO_ESP_REGISTERED_USERS_LIST)
-            if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST:
-                add_to_campaign_monitor(webhook_data, user, Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST)
-            return "User Registered Successfully"
+                # Adds this user to the registered users list
+                if Config.PIANO_ESP_REGISTERED_USERS_LIST:
+                    add_to_piano_esp(user, Config.PIANO_ESP_REGISTERED_USERS_LIST)
+                if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST:
+                    add_to_campaign_monitor(webhook_data, user, Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST)
+                return "User Registered Successfully"
 
-        # TODO if this is an unsubscribe
-        # Note: The only way to set up a piano esp webhook url is to email them. Currently,
-        # they are set to:
-        # production: https://lvn-ux-server.herokuapp.com/webhooks
-        # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
-        else:
-            print(webhook_data)
+            # TODO if user changed email / name / other details
+            # TODO registered user upgrade
+        except ValueError as e:
+            print(e, file=sys.stderr)
 
-        # TODO if user changed email / name / other details
-        # TODO registered user upgrade
-    except ValueError as e:
-        print(e, file=sys.stderr)
+    # Piano ESP Webhook
+    #
+    # Note: The only way to set up a piano esp webhook url is to email them. Currently,
+    # they are set to:
+    # production: https://lvn-ux-server.herokuapp.com/webhooks
+    # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
+    elif request.method == 'POST':
+        request_data = request.get_json()
+        print(request_data)
 
     return "Webhook failed"
 
