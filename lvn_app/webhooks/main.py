@@ -270,6 +270,8 @@ def process_piano_webhook(request):
         # they are set to:
         # production: https://lvn-ux-server.herokuapp.com/webhooks
         # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
+        else:
+            print(webhook_data)
 
         # TODO if user changed email / name / other details
         # TODO registered user upgrade
