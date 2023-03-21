@@ -305,6 +305,7 @@ def process_piano_webhook(request):
     # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
     elif request.method == 'POST':
         request_data = request.get_json()
+        print(request_data.keys())
         if 'user_removed' in request_data.keys():
             unsubscribe_from_campaign_monitor(request_data['email'])
 
