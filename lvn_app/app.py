@@ -19,10 +19,15 @@ def webhooks():
     if request.method == 'GET':
         return process_piano_webhook(request)
 
-    # Campaign monitor uses a POST webhook
-    # https://www.campaignmonitor.com/api/v3-3/webhooks/
     elif request.method == 'POST':
-        return process_campaign_monitor_webhook(request)
+        request_data = request.get_json()
+        # Campaign monitor uses a POST webhook and has an "Events" key
+        # https://www.campaignmonitor.com/api/v3-3/webhooks/
+        if 'Events' in request_data.keys():
+            return process_campaign_monitor_webhook(request)
+        else:
+            # Piano ESP also uses a POST request
+            return process_piano_webhook(request)
 
 
 if __name__ == '__main__':
