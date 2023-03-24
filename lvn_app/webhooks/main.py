@@ -34,24 +34,22 @@ def add_mvault_and_token_to_piano_user(mvault_id: str, token: str, user):
 
     # Add activation token to campaign monitor custom fields
     if Config.CAMPAIGN_MONITOR_API_URL:
-        resp = requests.put(
-            url=Config.CAMPAIGN_MONITOR_API_URL
-                + "/subscribers/"
-                + Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST
-                + ".json",
-            params={'email': user.email},
-            headers={'Content-type': 'application/json'},
-            auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
-            data=json.dumps({
-                "CustomFields": [{"Key": "passport-auth", "Value": token}],
-                "ConsentToTrack": "Unchanged",
-            })
-        )
-        if resp.ok:
-            print('Successfully added passport auth token ' + token + ' to user ' + user.uid + ' in campaign monitor')
-        else:
-            print('Could not add passport auth token ' + token + ' to user ' + user.uid + ' in campaign monitor')
-            print(resp.content, file=sys.stderr)
+        for list_id in Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST.split(','):
+            resp = requests.put(
+                url=Config.CAMPAIGN_MONITOR_API_URL + "/subscribers/" + list_id + ".json",
+                params={'email': user.email},
+                headers={'Content-type': 'application/json'},
+                auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
+                data=json.dumps({
+                    "CustomFields": [{"Key": "passport-auth", "Value": token}],
+                    "ConsentToTrack": "Unchanged",
+                })
+            )
+            if resp.ok:
+                print('Successfully added passport auth token ' + token + ' to user ' + user.uid + ' in campaign monitor')
+            else:
+                print('Could not add passport auth token ' + token + ' to user ' + user.uid + ' in campaign monitor')
+                print(resp.content, file=sys.stderr)
 
 
 def register_user_on_pbs(user_id: str, register_data):
@@ -101,7 +99,7 @@ def add_to_campaign_monitor(data, user, list_id):
     """
     Adds the user to the appropriate lists on campaign monitor
     """
-    if Config.CAMPAIGN_MONITOR_API_URL:
+    if Config.CAMPAIGN_MONITOR_API_URL and not is_subscribed_to_campaign_monitor(user.email, list_id):
         resp = requests.post(
             url=Config.CAMPAIGN_MONITOR_API_URL
                 + "/subscribers/"
@@ -129,50 +127,54 @@ def add_to_campaign_monitor(data, user, list_id):
             print(resp.content, file=sys.stderr)
 
 
+def is_subscribed_to_campaign_monitor(email, list_id):
+    """
+    Determines whether the user is subscribed to a list in campaign monitor
+    """
+    subscribed_resp = requests.get(
+        url=Config.CAMPAIGN_MONITOR_API_URL + "/subscribers/" + list_id + ".json",
+        params={'email': email},
+        headers={'Content-type': 'application/json'},
+        auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
+    )
+    if subscribed_resp.ok:
+        subscribed = json.loads(subscribed_resp.content)
+        return 'State' in subscribed.keys() and subscribed['State'] == 'Active'
+    return False
+
+
 def unsubscribe_from_campaign_monitor(email):
     """
     Unsubscribes the user to the appropriate lists on campaign monitor
     """
     if Config.CAMPAIGN_MONITOR_API_URL:
-        for campaign_monitor_list in [
-            Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST,
-            Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST
-        ]:
-            # Check if subscribed
-            subscribed_resp = requests.get(
-                url=Config.CAMPAIGN_MONITOR_API_URL
-                    + "/subscribers/"
-                    + campaign_monitor_list
-                    + ".json",
-                params={'email': email},
-                headers={'Content-type': 'application/json'},
-                auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
-            )
-            if subscribed_resp.ok:
-                subscribed = json.loads(subscribed_resp.content)
-                if 'State' in subscribed.keys() and subscribed['State'] == 'Active':
-                    # Only unsubscribe if subscribed
-                    resp = requests.post(
-                        url=Config.CAMPAIGN_MONITOR_API_URL
-                            + "/subscribers/"
-                            + campaign_monitor_list
-                            + "/unsubscribe.json",
-                        headers={'Content-type': 'application/json'},
-                        auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
-                        data=json.dumps({"EmailAddress": email})
-                    )
-                    if resp.ok:
-                        print('Successfully unsubscribed ' + email + ' to campaign monitor list ' + campaign_monitor_list)
-                    else:
-                        print('Unsubscribing ' + email + ' to campaign monitor list ' + campaign_monitor_list + ' failed', file=sys.stderr)
-                        print(resp.content, file=sys.stderr)
+        for campaign_monitor_list in (
+            Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST.split(',') +
+            Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST.split(',')
+        ):
+            if is_subscribed_to_campaign_monitor(email, campaign_monitor_list):
+                # Only unsubscribe if subscribed
+                resp = requests.post(
+                    url=Config.CAMPAIGN_MONITOR_API_URL
+                        + "/subscribers/"
+                        + campaign_monitor_list
+                        + "/unsubscribe.json",
+                    headers={'Content-type': 'application/json'},
+                    auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
+                    data=json.dumps({"EmailAddress": email})
+                )
+                if resp.ok:
+                    print('Successfully unsubscribed ' + email + ' to campaign monitor list ' + campaign_monitor_list)
+                else:
+                    print('Unsubscribing ' + email + ' to campaign monitor list ' + campaign_monitor_list + ' failed', file=sys.stderr)
+                    print(resp.content, file=sys.stderr)
 
 
 def add_to_piano_esp(user, list_id):
     """
     Adds the user to the correct list on piano ESP
     """
-    if Config.PIANO_ESP_API_URL:
+    if Config.PIANO_ESP_API_URL and not is_subscribed_to_piano_esp(user.email, list_id):
         resp = requests.post(
             url=Config.PIANO_ESP_API_URL + "/tracker/securesub",
             params={'api_key': Config.PIANO_ESP_API_KEY},
@@ -202,10 +204,7 @@ def add_to_piano_esp(user, list_id):
             print(resp.content, file=sys.stderr)
 
 
-def unsubscribe_from_piano_esp(email):
-    """
-    Removes the user from all lists on piano ESP
-    """
+def get_subscribed_lists_piano_esp(email):
     if Config.PIANO_ESP_API_URL:
         # Check if subscribed
         all_mlids = (Config.PIANO_ESP_REGISTERED_USERS_LIST + ',' + Config.PIANO_ESP_PLUS_USERS_LIST).split(',')
@@ -217,6 +216,23 @@ def unsubscribe_from_piano_esp(email):
             )
             if subscribed_resp.ok:
                 subscribed_mlids.append(mlid)
+        return subscribed_mlids
+    return []
+
+
+def is_subscribed_to_piano_esp(email, list_id):
+    """
+    Determines whether the user is subscribed to a list in piano esp
+    """
+    return list_id in get_subscribed_lists_piano_esp(email)
+
+
+def unsubscribe_from_piano_esp(email):
+    """
+    Removes the user from all lists on piano ESP
+    """
+    if Config.PIANO_ESP_API_URL:
+        subscribed_mlids = get_subscribed_lists_piano_esp(email)
 
         if len(subscribed_mlids) > 0:
             resp = requests.delete(
@@ -307,7 +323,8 @@ def process_piano_webhook(request):
                     if Config.PIANO_ESP_PLUS_USERS_LIST:
                         add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
                     if Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST:
-                        add_to_campaign_monitor(webhook_data, user, Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST)
+                        for list_id in Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST.split(','):
+                            add_to_campaign_monitor(webhook_data, user, list_id)
                     # If this user is newly registered to lv+, we also add to pbs passport
                     add_to_pbs(user)
 
@@ -315,7 +332,8 @@ def process_piano_webhook(request):
                 if Config.PIANO_ESP_REGISTERED_USERS_LIST:
                     add_to_piano_esp(user, Config.PIANO_ESP_REGISTERED_USERS_LIST)
                 if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST:
-                    add_to_campaign_monitor(webhook_data, user, Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST)
+                    for list_id in Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST.split(','):
+                        add_to_campaign_monitor(webhook_data, user, list_id)
                 return "User Registered Successfully"
 
             # TODO if user changed email / name / other details
@@ -338,9 +356,11 @@ def process_piano_webhook(request):
 
 def process_campaign_monitor_webhook(request):
     # Campaign monitor sends a list of events that we loop through and handle
-    request_data = request.get_json()
-    for event in request_data['Events']:
-        if event['Type'] == 'Deactivate':
-            unsubscribe_from_piano_esp(event['EmailAddress'])
+    # Note: currently disabled because we do not want unsubscribes in campaign monitor (the marketing emails)
+    #       to also unsubscribe users from piano esp (the editorial emails)
+    # request_data = request.get_json()
+    # for event in request_data['Events']:
+    #    if event['Type'] == 'Deactivate':
+    #        unsubscribe_from_piano_esp(event['EmailAddress'])
 
     return "Success"
