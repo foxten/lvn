@@ -322,14 +322,22 @@ def process_piano_webhook(request):
                 if hasattr(webhook_data, 'rid') and \
                         (webhook_data.rid == Config.LV_PLUS_RESOURCE_ID or
                          webhook_data.rid == Config.LV_PLUS_COMPLIMENTARY_RESOURCE_ID):
+                    # Complimentary users are the same as plus users except that they do not
+                    # have pbs passport and are added to the "complimentary" list in campaign
+                    # monitor instead of the plus list.
                     if Config.PIANO_ESP_PLUS_USERS_LIST:
                         add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
-                    if Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST:
-                        for list_id in Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST.split(','):
-                            add_to_campaign_monitor(webhook_data, user, list_id)
+
                     # If this user is newly registered to lv+, we also add to pbs passport
-                    if (webhook_data.rid == Config.LV_PLUS_RESOURCE_ID):
+                    if webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
+                        if Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST:
+                            for list_id in Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST.split(','):
+                                add_to_campaign_monitor(webhook_data, user, list_id)
                         add_to_pbs(user)
+                    else:
+                        if Config.CAMPAIGN_MONITOR_PLUS_COMPLIMENTARY_USERS_LIST:
+                            for list_id in Config.CAMPAIGN_MONITOR_PLUS_COMPLIMENTARY_USERS_LIST.split(','):
+                                add_to_campaign_monitor(webhook_data, user, list_id)
 
                 # Adds this user to the registered users list
                 if Config.PIANO_ESP_REGISTERED_USERS_LIST:
