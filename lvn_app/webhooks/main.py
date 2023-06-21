@@ -184,6 +184,7 @@ def add_to_piano_esp(user, list_id):
         if resp.ok:
             print('Successfully registered ' + user.email + ' to piano esp list ' + list_id)
             # Add merge fields
+            print(user)
             resp2 = requests.post(
                 url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
                 params={'api_key': Config.PIANO_ESP_API_KEY},
