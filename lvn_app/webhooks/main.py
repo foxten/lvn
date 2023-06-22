@@ -192,7 +192,7 @@ def add_to_piano_esp(user, list_id):
                     {"user": user.email, "umf": "FIRSTNAME", "value": user.first_name},
                     {"user": user.email, "umf": "LASTNAME", "value": user.last_name},
                     {"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name},
-                    {"user": user.email, "umf": "UID", "value": user.uid},
+                    {"user": user.email, "umf": "USERID", "value": user.uid},
                 ])
             )
             if resp2.ok:
