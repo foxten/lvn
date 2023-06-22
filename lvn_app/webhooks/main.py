@@ -184,7 +184,6 @@ def add_to_piano_esp(user, list_id):
         if resp.ok:
             print('Successfully registered ' + user.email + ' to piano esp list ' + list_id)
             # Add merge fields
-            print(user)
             resp2 = requests.post(
                 url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
                 params={'api_key': Config.PIANO_ESP_API_KEY},
@@ -192,7 +191,8 @@ def add_to_piano_esp(user, list_id):
                 data=json.dumps([
                     {"user": user.email, "umf": "FIRSTNAME", "value": user.first_name},
                     {"user": user.email, "umf": "LASTNAME", "value": user.last_name},
-                    {"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name}
+                    {"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name},
+                    {"user": user.email, "umf": "UID", "value": user.uid},
                 ])
             )
             if resp2.ok:
