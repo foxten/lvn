@@ -54,7 +54,7 @@ if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST and Config.CAMPAIGN_MONITOR_API
         )
         if resp.ok:
             results = json.loads(resp.content)
-            userids = [lambda e: {
+            userids = [{
                 "email": e['EmailAddress'],
                 "userid": next((f['Value'] for f in e['CustomFields'] if f['Key'] == "piano_uid"), "")
             } for e in results['Results']]
