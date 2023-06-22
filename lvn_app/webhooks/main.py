@@ -111,9 +111,9 @@ def add_to_campaign_monitor(data, user, list_id):
                 "EmailAddress": user.email,
                 "Name": user.personal_name,
                 "CustomFields": [
-                    {"Key": "firstname", "Value": user.first_name},
-                    {"Key": "lastname", "Value": user.last_name},
-                    {"Key": "piano_uid", "Value": data.uid},
+                    {"Key": "firstname", "Value": user.first_name or ""},
+                    {"Key": "lastname", "Value": user.last_name or ""},
+                    {"Key": "piano_uid", "Value": data.uid or ""},
                 ],
                 "Resubscribe": True,
                 "RestartSubscriptionBasedAutoresponders": True,
@@ -189,10 +189,10 @@ def add_to_piano_esp(user, list_id):
                 params={'api_key': Config.PIANO_ESP_API_KEY},
                 headers={'Content-type': 'application/json'},
                 data=json.dumps([
-                    {"user": user.email, "umf": "FIRSTNAME", "value": user.first_name},
-                    {"user": user.email, "umf": "LASTNAME", "value": user.last_name},
-                    {"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name},
-                    {"user": user.email, "umf": "USERID", "value": user.uid},
+                    {"user": user.email, "umf": "FIRSTNAME", "value": user.first_name or ""},
+                    {"user": user.email, "umf": "LASTNAME", "value": user.last_name or ""},
+                    {"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name or ""},
+                    {"user": user.email, "umf": "USERID", "value": user.uid or ""},
                 ])
             )
             if resp2.ok:
