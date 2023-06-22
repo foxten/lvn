@@ -40,3 +40,23 @@ for campaign_monitor_list in [
     Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST
 ]:
     register_campaign_monitor_webhook(campaign_monitor_list)
+
+# Get all users in piano esp and attempt to add USERID
+if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST and Config.CAMPAIGN_MONITOR_API_URL and Config.PIANO_ESP_API_URL:
+    for list_id in Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST.split(','):
+        resp = requests.get(
+            url=Config.CAMPAIGN_MONITOR_API_URL
+                + "/lists/"
+                + list_id
+                + "/active.json",
+            headers={'Content-type': 'application/json'},
+            auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
+            params={'pagesize': 5000},
+        )
+        if resp.ok:
+            results = json.loads(resp.content)
+            userids = [lambda e: {
+                "email": e['EmailAddress'],
+                "userid": next((f['Value'] for f in e['CustomFields'] if f['Key'] == "piano_uid"), "")
+            } for e in results['Results']]
+            print(userids)
