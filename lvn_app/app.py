@@ -50,8 +50,7 @@ if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST and Config.CAMPAIGN_MONITOR_API
                 + list_id
                 + "/active.json",
             headers={'Content-type': 'application/json'},
-            auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x'),
-            params={'pagesize': 5000},
+            auth=(Config.CAMPAIGN_MONITOR_API_KEY, 'x')
         )
         if resp.ok:
             results = json.loads(resp.content)
