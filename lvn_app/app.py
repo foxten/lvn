@@ -60,3 +60,5 @@ if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST and Config.CAMPAIGN_MONITOR_API
                 "userid": next((f['Value'] for f in e['CustomFields'] if f['Key'] == "piano_uid"), "")
             } for e in results['Results']]
             print(userids)
+        else:
+            print(resp.content, file=sys.stderr)
