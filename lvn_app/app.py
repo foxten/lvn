@@ -1,6 +1,7 @@
 from flask import Flask, request
 from lvn_app.webhooks.main import *
 from dotenv import load_dotenv
+import time
 
 load_dotenv()
 
@@ -63,6 +64,7 @@ def backfill_userids(list_id, endpoint):
                 "userid": next((f['Value'] for f in e['CustomFields'] if f['Key'] == "[piano_uid]"), "")
             } for e in results['Results']]
             for user in userids:
+                time.sleep(1)
                 resp2 = requests.post(
                     url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
                     params={'api_key': Config.PIANO_ESP_API_KEY},
