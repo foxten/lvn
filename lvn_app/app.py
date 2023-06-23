@@ -1,7 +1,6 @@
 from flask import Flask, request
 from lvn_app.webhooks.main import *
 from dotenv import load_dotenv
-import time
 
 load_dotenv()
 
