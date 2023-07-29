@@ -323,7 +323,6 @@ def register_campaign_monitor_webhook(cm_list):
 
 
 def process_piano_webhook(request):
-    print(request)
     # Piano Webhook
     if request.method == 'GET':
         try:
