@@ -14,7 +14,6 @@ def index():
 
 @app.route('/webhooks', methods=['GET', 'POST'])
 def webhooks():
-    print(request)
     # Piano puts webhooks data as a query parameter in a GET request
     # https://docs.piano.io/webhooks/
     if request.method == 'GET':
