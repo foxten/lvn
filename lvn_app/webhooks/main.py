@@ -5,6 +5,7 @@ import requests
 import json
 import sys
 import time
+import base64
 
 PIANO_CLIENT = Client(api_host=Config.PIANO_HOST, api_token=Config.PIANO_API_TOKEN,
                       private_key=Config.PIANO_PRIVATE_KEY)
@@ -170,6 +171,32 @@ def unsubscribe_from_campaign_monitor(email):
                     print(resp.content, file=sys.stderr)
 
 
+def add_piano_esp_merge_fields(user):
+    merge_fields = []
+    if "first_name" in user:
+        merge_fields.append({"user": user["email"], "umf": "FIRSTNAME", "value": user["first_name"]})
+    if "last_name" in user:
+        merge_fields.append({"user": user["email"], "umf": "LASTNAME", "value": user["last_name"]})
+    if "personal_name" in user:
+        merge_fields.append({"user": user["email"], "umf": "PERSONALNAME", "value": user["personal_name"]})
+    if "uid" in user:
+        merge_fields.append({"user": user["email"], "umf": "USERID", "value": user["uid"]})
+    if "adid" in user:
+        merge_fields.append({"user": user["email"], "umf": "ADID", "value": user["adid"]})
+
+    resp = requests.post(
+        url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
+        params={'api_key': Config.PIANO_ESP_API_KEY},
+        headers={'Content-type': 'application/json'},
+        data=json.dumps(merge_fields)
+    )
+    if resp.ok:
+        print('Successfully added merge fields to ' + user["email"] + ' in piano esp')
+    else:
+        print('Adding merge fields to ' + user["email"] + ' in piano esp failed', file=sys.stderr)
+        print(resp.content, file=sys.stderr)
+
+
 def add_to_piano_esp(user, list_id):
     """
     Adds the user to the correct list on piano ESP
@@ -183,23 +210,16 @@ def add_to_piano_esp(user, list_id):
         )
         if resp.ok:
             print('Successfully registered ' + user.email + ' to piano esp list ' + list_id)
+            print(resp.content)
             # Add merge fields
-            resp2 = requests.post(
-                url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
-                params={'api_key': Config.PIANO_ESP_API_KEY},
-                headers={'Content-type': 'application/json'},
-                data=json.dumps([
-                    {"user": user.email, "umf": "FIRSTNAME", "value": user.first_name or ""},
-                    {"user": user.email, "umf": "LASTNAME", "value": user.last_name or ""},
-                    {"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name or ""},
-                    {"user": user.email, "umf": "USERID", "value": user.uid or ""},
-                ])
-            )
-            if resp2.ok:
-                print('Successfully added merge fields to ' + user.email + ' in piano esp')
-            else:
-                print('Adding merge fields to ' + user.email + ' in piano esp failed', file=sys.stderr)
-                print(resp2.content, file=sys.stderr)
+            add_piano_esp_merge_fields({
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "personal_name": user.personal_name,
+                "uid": user.uid,
+                "adid": base64.b32encode(bytearray(user.email, 'ascii')).decode('utf-8')
+            })
         else:
             print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed', file=sys.stderr)
             print(resp.content, file=sys.stderr)
@@ -360,8 +380,16 @@ def process_piano_webhook(request):
     # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
     elif request.method == 'POST':
         request_data = request.get_json()
+
         if 'action' in request_data.keys() and request_data['action'] == 'user_removed':
             unsubscribe_from_campaign_monitor(request_data['email'])
+        # New email subscription to newsletter
+        if 'action' in request_data.keys() and request_data['action'] == 'user_added':
+            add_piano_esp_merge_fields({
+                'email': request_data['email'],
+                'adid': base64.b32encode(bytearray(request_data['email'], 'ascii')).decode('utf-8')
+            })
+            print('Added mergefields to new email subscriber ' + request_data['email'])
 
     return "Webhook failed"
 
