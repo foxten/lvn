@@ -374,7 +374,6 @@ def process_piano_webhook(request):
     # sandbox: https://lvn-sandbox-ux-server.herokuapp.com/webhooks
     elif request.method == 'POST':
         request_data = request.get_json()
-        print(request_data)
 
         if 'action' in request_data.keys() and request_data['action'] == 'user_removed':
             unsubscribe_from_campaign_monitor(request_data['email'])
@@ -384,7 +383,7 @@ def process_piano_webhook(request):
                 'email': request_data['email'],
                 'adid': base64.b32encode(bytearray(request_data['email'], 'ascii')).decode('utf-8')
             })
-            print('Adding mergefields to new email subscriber ' + request_data['email'])
+            print('Added mergefields to new email subscriber ' + request_data['email'])
 
     return "Webhook failed"
 
