@@ -173,15 +173,15 @@ def unsubscribe_from_campaign_monitor(email):
 
 def add_piano_esp_merge_fields(user):
     merge_fields = []
-    if user.first_name:
+    if "first_name" in user:
         merge_fields.append({"user": user.email, "umf": "FIRSTNAME", "value": user.first_name})
-    if user.last_name:
+    if "last_name" in user:
         merge_fields.append({"user": user.email, "umf": "LASTNAME", "value": user.last_name})
-    if user.personal_name:
+    if "personal_name" in user:
         merge_fields.append({"user": user.email, "umf": "PERSONALNAME", "value": user.personal_name})
-    if user.uid:
+    if "uid" in user:
         merge_fields.append({"user": user.email, "umf": "USERID", "value": user.uid})
-    if user.adid:
+    if "adid" in user:
         merge_fields.append({"user": user.email, "umf": "ADID", "value": user.adid})
 
     resp = requests.post(
