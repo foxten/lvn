@@ -213,7 +213,12 @@ def add_to_piano_esp(user, list_id):
             print(resp.content)
             # Add merge fields
             add_piano_esp_merge_fields({
-                **user, "adid": base64.b32encode(bytearray(user.email, 'ascii')).decode('utf-8')
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "personal_name": user.personal_name,
+                "uid": user.uid,
+                "adid": base64.b32encode(bytearray(user.email, 'ascii')).decode('utf-8')
             })
         else:
             print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed', file=sys.stderr)
