@@ -6,6 +6,7 @@ import json
 import sys
 import time
 import base64
+import re
 
 PIANO_CLIENT = Client(api_host=Config.PIANO_HOST, api_token=Config.PIANO_API_TOKEN,
                       private_key=Config.PIANO_PRIVATE_KEY)
@@ -218,7 +219,11 @@ def add_to_piano_esp(user, list_id):
                 "last_name": user.last_name,
                 "personal_name": user.personal_name,
                 "uid": user.uid,
-                "adid": base64.b32encode(bytearray(user.email, 'ascii')).decode('utf-8')
+                "adid": re.sub(
+                    r'[^A-Za-z0-9]+',
+                    '',
+                    base64.b32encode(bytearray(user.email, 'ascii')).decode('utf-8')
+                )
             })
         else:
             print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed', file=sys.stderr)
