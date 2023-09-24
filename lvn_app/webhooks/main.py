@@ -116,9 +116,9 @@ def add_to_campaign_monitor(data, user, donation_data, list_id):
                     {"Key": "firstname", "Value": user.first_name or ""},
                     {"Key": "lastname", "Value": user.last_name or ""},
                     # {"Key": "piano_uid", "Value": data.uid or ""},
-                    {"Key": "donation_amount", "Value": donation_data.donation_amount or ""},
-                    {"Key": "donation_frequency", "Value": donation_data.donation_frequency or ""},
-                    {"Key": "donation_expiration", "Value": donation_data.donation_expiration or ""},
+                    {"Key": "donation_amount", "Value": donation_data["donation_amount"] or ""},
+                    {"Key": "donation_frequency", "Value": donation_data["donation_frequency"] or ""},
+                    {"Key": "donation_expiration", "Value": donation_data["donation_expiration"] or ""},
                 ],
                 "Resubscribe": True,
                 "RestartSubscriptionBasedAutoresponders": True,
@@ -175,7 +175,7 @@ def unsubscribe_from_campaign_monitor(email):
                     print(resp.content, file=sys.stderr)
 
 
-def add_piano_esp_merge_fields(user, donation_data):
+def add_piano_esp_merge_fields(user):
     merge_fields = []
     if "first_name" in user:
         merge_fields.append({"user": user["email"], "umf": "FIRSTNAME", "value": user["first_name"]})
@@ -188,9 +188,9 @@ def add_piano_esp_merge_fields(user, donation_data):
     if "adid" in user:
         merge_fields.append({"user": user["email"], "umf": "ADID", "value": user["adid"]})
     if "donation_status" in user:
-        merge_fields.append({"user": user["email"], "umf": "DONATIONSTATUS", "value": donation_data["donation_status"]})
+        merge_fields.append({"user": user["email"], "umf": "DONATIONSTATUS", "value": user["donation_status"]})
     if "donation_amount" in user:
-        merge_fields.append({"user": user["email"], "umf": "DONATIONAMOUNT", "value": donation_data["donation_amount"]})
+        merge_fields.append({"user": user["email"], "umf": "DONATIONAMOUNT", "value": user["donation_amount"]})
 
     resp = requests.post(
         url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
@@ -231,8 +231,8 @@ def add_to_piano_esp(user, donation_data, list_id):
                     '',
                     base64.b32encode(bytearray(user.email, 'ascii')).decode('utf-8')
                 ),
-                "donation_status": donation_data.donated,
-                "donation_amount": donation_data.donation_amount, 
+                "donation_status": donation_data["donated"],
+                "donation_amount": donation_data["donation_amount"], 
             })
         else:
             print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed', file=sys.stderr)
