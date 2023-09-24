@@ -1,6 +1,6 @@
 from lvn_app.config import Config
 from pianosdk import Client
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import json
 import sys
@@ -12,7 +12,7 @@ PIANO_CLIENT = Client(api_host=Config.PIANO_HOST, api_token=Config.PIANO_API_TOK
                       private_key=Config.PIANO_PRIVATE_KEY)
 
 
-def add_mvault_and_token_to_piano_user(mvault_id: str, token: str, user):
+def add_mvault_and_token_to_piano_user(mvault_id: str, token: str, user): #ignoring
     """
     Takes the Mvault ID and Token String returned from the Mvault API and
     saves them on the User record in Piano.
@@ -54,7 +54,7 @@ def add_mvault_and_token_to_piano_user(mvault_id: str, token: str, user):
                 print(resp.content, file=sys.stderr)
 
 
-def register_user_on_pbs(user_id: str, register_data):
+def register_user_on_pbs(user_id: str, register_data): #ignoring
     """
     Takes the user info from Piano and registers them on MVault.
     """
@@ -76,7 +76,7 @@ def register_user_on_pbs(user_id: str, register_data):
     return None, None
 
 
-def add_to_pbs(user):
+def add_to_pbs(user): #ignoring
     """
     Finds the user via the uid on Piano, registers them on Mvault, and
     adds them to an email list that will send their passport token.
@@ -115,7 +115,10 @@ def add_to_campaign_monitor(data, user, list_id):
                 "CustomFields": [
                     {"Key": "firstname", "Value": user.first_name or ""},
                     {"Key": "lastname", "Value": user.last_name or ""},
-                    {"Key": "piano_uid", "Value": data.uid or ""},
+                    # {"Key": "piano_uid", "Value": data.uid or ""},
+                    {"Key": "donation_amount", "Value": user.donation_amount or ""},
+                    {"Key": "donation_frequency", "Value": user.donation_frequency or ""},
+                    {"Key": "donation_expiration", "Value": user.donation_expiration or ""},
                 ],
                 "Resubscribe": True,
                 "RestartSubscriptionBasedAutoresponders": True,
@@ -152,7 +155,7 @@ def unsubscribe_from_campaign_monitor(email):
     if Config.CAMPAIGN_MONITOR_API_URL:
         for campaign_monitor_list in (
             Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST.split(',') +
-            Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST.split(',')
+            Config.CAMPAIGN_MONITOR_ACTIVE_DONORS_REGULAR_PROD.split(',')
         ):
             if is_subscribed_to_campaign_monitor(email, campaign_monitor_list):
                 # Only unsubscribe if subscribed
@@ -178,12 +181,16 @@ def add_piano_esp_merge_fields(user):
         merge_fields.append({"user": user["email"], "umf": "FIRSTNAME", "value": user["first_name"]})
     if "last_name" in user:
         merge_fields.append({"user": user["email"], "umf": "LASTNAME", "value": user["last_name"]})
-    if "personal_name" in user:
-        merge_fields.append({"user": user["email"], "umf": "PERSONALNAME", "value": user["personal_name"]})
-    if "uid" in user:
-        merge_fields.append({"user": user["email"], "umf": "USERID", "value": user["uid"]})
+    # if "personal_name" in user:
+    #     merge_fields.append({"user": user["email"], "umf": "PERSONALNAME", "value": user["personal_name"]})
+    # if "uid" in user:
+        # merge_fields.append({"user": user["email"], "umf": "USERID", "value": user["uid"]})
     if "adid" in user:
         merge_fields.append({"user": user["email"], "umf": "ADID", "value": user["adid"]})
+    if "donation_status" in user:
+        merge_fields.append({"user": user["email"], "umf": "DONATIONSTATUS", "value": user["donation_status"]})
+    if "donation_amount" in user:
+        merge_fields.append({"user": user["email"], "umf": "DONATIONAMOUNT", "value": user["donation_amount"]})
 
     resp = requests.post(
         url=Config.PIANO_ESP_API_URL + "/userdata/umfval/pub/" + Config.PIANO_ESP_SITE_ID + "/set",
@@ -214,16 +221,18 @@ def add_to_piano_esp(user, list_id):
             print(resp.content)
             # Add merge fields
             add_piano_esp_merge_fields({
-                "email": user.email,
+                # "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
-                "personal_name": user.personal_name,
-                "uid": user.uid,
+                # "personal_name": user.personal_name,
+                # "uid": user.uid,
                 "adid": re.sub(
                     r'[^A-Za-z0-9]+',
                     '',
                     base64.b32encode(bytearray(user.email, 'ascii')).decode('utf-8')
-                )
+                ),
+                "donation_status": user.donated,
+                "donation_amount": user.donation_amount, 
             })
         else:
             print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed', file=sys.stderr)
@@ -341,6 +350,7 @@ def process_piano_webhook(request):
 
             # Get the user data from the piano api
             user = PIANO_CLIENT.publisher_user_api.get(aid=webhook_data.aid, uid=webhook_data.uid).data
+            term = PIANO_CLIENT.publisher_term_api.get(term_id=webhook_data.term_id).data
 
             print('Received piano webhook for ' + webhook_data.event)
             # See if the event is a new registration
@@ -351,19 +361,33 @@ def process_piano_webhook(request):
                     # Complimentary users are the same as plus users except that they do not
                     # have pbs passport and are added to the "complimentary" list in campaign
                     # monitor instead of the plus list.
+                    if webhook_data.event == 'new_purchase':
+                        user.donated = True
+                        user.donation_amount = term.payment_billing_plan_table.priceAndTax
+                        user.donation_frequency = term.payment_billing_plan_table.period
+                        if term.payment_billing_plan_table.period is 'year':
+                            user.donation_expiration = datetime.today() + timedelta(years = 1)
+                        else: 
+                            user.donation_expiration = datetime.today() + timedelta(months = 1)
+                    else:
+                        user.donated = False
+                        user.donation_amount = 0
+                        user.donation_frequency = "N/A"
+                        user.donation_expiration = "N/A"
+
                     if Config.PIANO_ESP_PLUS_USERS_LIST:
                         add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
+                    if Config.CAMPAIGN_MONITOR_ACTIVE_DONORS_REGULAR_PROD:
+                        for list_id in Config.CAMPAIGN_MONITOR_ACTIVE_DONORS_REGULAR_PROD.split(','):
+                            add_to_campaign_monitor(webhook_data, user, list_id)
 
-                    # If this user is newly registered to lv+, we also add to pbs passport
-                    if webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
-                        if Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST:
-                            for list_id in Config.CAMPAIGN_MONITOR_PLUS_USERS_LIST.split(','):
-                                add_to_campaign_monitor(webhook_data, user, list_id)
-                        add_to_pbs(user)
-                    else:
-                        if Config.CAMPAIGN_MONITOR_PLUS_COMPLIMENTARY_USERS_LIST:
-                            for list_id in Config.CAMPAIGN_MONITOR_PLUS_COMPLIMENTARY_USERS_LIST.split(','):
-                                add_to_campaign_monitor(webhook_data, user, list_id)
+                    # If this user is newly registered to lv+, we also add to pbs passport//remove in new version
+                    # if webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
+                    #     add_to_pbs(user)
+                    # else:
+                        # if Config.CAMPAIGN_MONITOR_PLUS_COMPLIMENTARY_USERS_LIST:
+                        #     for list_id in Config.CAMPAIGN_MONITOR_PLUS_COMPLIMENTARY_USERS_LIST.split(','):
+                        #         add_to_campaign_monitor(webhook_data, user, list_id)
 
                 # Adds this user to the registered users list
                 if Config.PIANO_ESP_REGISTERED_USERS_LIST:
