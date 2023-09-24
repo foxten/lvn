@@ -221,7 +221,7 @@ def add_to_piano_esp(user, donation_data, list_id):
             print(resp.content)
             # Add merge fields
             add_piano_esp_merge_fields({
-                # "email": user.email,
+                "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 # "personal_name": user.personal_name,
