@@ -348,9 +348,10 @@ def process_piano_webhook(request):
         try:
             webhook_data = PIANO_CLIENT.parse_webhook_data(request.args["data"])
             print(webhook_data)
+
+            #version=2 event='new_purchase' type='access_granted' aid='ZBUW1yK6pu' expires=1698179559 term_id='TMIWF6EKUF10' uid='4dad2d4f-f113-4808-a030-0cad150cd6d4' rid='RL03VYY' access_id='zefEL4xrDQjc' user_email='flairrah+2@gmail.com' contract_id=None payment_id='UPX8CAXBMUYG' conversion_id=None
             # Get the user data from the piano api
             user = PIANO_CLIENT.publisher_user_api.get(aid=webhook_data.aid, uid=webhook_data.uid).data
-            term = PIANO_CLIENT.publisher_term_api.get(term_id=webhook_data.term_id).data
 
             print('Received piano webhook for ' + webhook_data.event)
             # See if the event is a new registration
@@ -361,25 +362,28 @@ def process_piano_webhook(request):
                     # Complimentary users are the same as plus users except that they do not
                     # have pbs passport and are added to the "complimentary" list in campaign
                     # monitor instead of the plus list.
+                    new_user = {**user}
                     if webhook_data.event == 'new_purchase':
-                        user.donated = True
-                        user.donation_amount = term.payment_billing_plan_table.priceAndTax
-                        user.donation_frequency = term.payment_billing_plan_table.period
+                        term = PIANO_CLIENT.publisher_term_api.get(term_id=webhook_data.term_id).data
+                        print(term)
+                        new_user["donated"] = True
+                        new_user["donation_amount"] = term.payment_billing_plan_table.priceAndTax
+                        new_user["donation_frequency"] = term.payment_billing_plan_table.period
                         if term.payment_billing_plan_table.period is 'year':
-                            user.donation_expiration = datetime.today() + timedelta(years = 1)
+                            new_user["donation_expiration"] = datetime.today() + timedelta(years = 1)
                         else: 
-                            user.donation_expiration = datetime.today() + timedelta(months = 1)
+                            new_user["donation_expiration"] = datetime.today() + timedelta(months = 1)
                     else:
-                        user.donated = False
-                        user.donation_amount = 0
-                        user.donation_frequency = "N/A"
-                        user.donation_expiration = "N/A"
+                        new_user["donated"] = False
+                        new_user["donation_amount"] = 0
+                        new_user["donation_frequency "]= "N/A"
+                        new_user["donation_expiration"] = "N/A"
 
                     if Config.PIANO_ESP_PLUS_USERS_LIST:
-                        add_to_piano_esp(user, Config.PIANO_ESP_PLUS_USERS_LIST)
+                        add_to_piano_esp(new_user, Config.PIANO_ESP_PLUS_USERS_LIST)
                     if Config.CAMPAIGN_MONITOR_ACTIVE_DONORS_REGULAR_PROD:
                         for list_id in Config.CAMPAIGN_MONITOR_ACTIVE_DONORS_REGULAR_PROD.split(','):
-                            add_to_campaign_monitor(webhook_data, user, list_id)
+                            add_to_campaign_monitor(webhook_data, new_user, list_id)
 
                     # If this user is newly registered to lv+, we also add to pbs passport//remove in new version
                     # if webhook_data.rid == Config.LV_PLUS_RESOURCE_ID:
@@ -391,10 +395,10 @@ def process_piano_webhook(request):
 
                 # Adds this user to the registered users list
                 if Config.PIANO_ESP_REGISTERED_USERS_LIST:
-                    add_to_piano_esp(user, Config.PIANO_ESP_REGISTERED_USERS_LIST)
+                    add_to_piano_esp(new_user, Config.PIANO_ESP_REGISTERED_USERS_LIST)
                 if Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST:
                     for list_id in Config.CAMPAIGN_MONITOR_REGISTERED_USERS_LIST.split(','):
-                        add_to_campaign_monitor(webhook_data, user, list_id)
+                        add_to_campaign_monitor(webhook_data, new_user, list_id)
                 return "User Registered Successfully"
 
             # TODO if user changed email / name / other details
