@@ -352,6 +352,7 @@ def process_piano_webhook(request):
             #version=2 event='new_purchase' type='access_granted' aid='ZBUW1yK6pu' expires=1698179559 term_id='TMIWF6EKUF10' uid='4dad2d4f-f113-4808-a030-0cad150cd6d4' rid='RL03VYY' access_id='zefEL4xrDQjc' user_email='flairrah+2@gmail.com' contract_id=None payment_id='UPX8CAXBMUYG' conversion_id=None
             # Get the user data from the piano api
             user = PIANO_CLIENT.publisher_user_api.get(aid=webhook_data.aid, uid=webhook_data.uid).data
+            new_user = {**user}
 
             print('Received piano webhook for ' + webhook_data.event)
             # See if the event is a new registration
@@ -362,7 +363,6 @@ def process_piano_webhook(request):
                     # Complimentary users are the same as plus users except that they do not
                     # have pbs passport and are added to the "complimentary" list in campaign
                     # monitor instead of the plus list.
-                    new_user = {**user}
                     if webhook_data.event == 'new_purchase':
                         term = PIANO_CLIENT.publisher_term_api.get(term_id=webhook_data.term_id).data
                         print(term)
