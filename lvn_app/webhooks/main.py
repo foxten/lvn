@@ -347,7 +347,7 @@ def process_piano_webhook(request):
     if request.method == 'GET':
         try:
             webhook_data = PIANO_CLIENT.parse_webhook_data(request.args["data"])
-
+            print(webhook_data)
             # Get the user data from the piano api
             user = PIANO_CLIENT.publisher_user_api.get(aid=webhook_data.aid, uid=webhook_data.uid).data
             term = PIANO_CLIENT.publisher_term_api.get(term_id=webhook_data.term_id).data
