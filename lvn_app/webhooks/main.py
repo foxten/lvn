@@ -370,9 +370,9 @@ def process_piano_webhook(request):
                     if webhook_data.event == 'new_purchase':
                         term = PIANO_CLIENT.publisher_term_api.get(term_id=webhook_data.term_id).data
                         donation_data["donated"] = True
-                        donation_data["donation_amount"] = term.payment_billing_plan_table[0].priceAndTax
-                        donation_data["donation_frequency"] = term.payment_billing_plan_table[0].period
-                        if term.payment_billing_plan_table[0].period is 'year':
+                        donation_data["donation_amount"] = term.payment_billing_plan_table[0]["priceAndTax"]
+                        donation_data["donation_frequency"] = term.payment_billing_plan_table[0]["period"]
+                        if term.payment_billing_plan_table[0]["period"] is 'year':
                             donation_data["donation_expiration"] = datetime.today() + timedelta(years = 1)
                         else: 
                             donation_data["donation_expiration"] = datetime.today() + timedelta(months = 1)
