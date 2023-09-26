@@ -177,6 +177,7 @@ def unsubscribe_from_campaign_monitor(email):
 
 
 def add_piano_esp_merge_fields(user):
+    print(user)
     merge_fields = []
     if "first_name" in user:
         merge_fields.append({"user": user["email"], "umf": "FIRSTNAME", "value": user["first_name"]})
@@ -373,13 +374,11 @@ def process_piano_webhook(request):
                         donation_data["donated"] = True
                         donation_data["donation_amount"] = term.payment_billing_plan_table[0]["priceAndTax"]
                         donation_data["donation_frequency"] = term.payment_billing_plan_table[0]["period"]
-                        if term.payment_billing_plan_table[0]["period"] is 'year':
+                        if term.payment_billing_plan_table[0]["period"] == "year":
                             donation_data["donation_expiration"] = (datetime.today() + relativedelta(years=1)).isoformat()
                         else: 
                             donation_data["donation_expiration"] = (datetime.today() + relativedelta(months=1)).isoformat()
 
-                    if Config.PIANO_ESP_PLUS_USERS_LIST:
-                        add_to_piano_esp(user, donation_data, Config.PIANO_ESP_PLUS_USERS_LIST)
                     if Config.CAMPAIGN_MONITOR_ACTIVE_DONORS_REGULAR_PROD:
                         for list_id in Config.CAMPAIGN_MONITOR_ACTIVE_DONORS_REGULAR_PROD.split(','):
                             add_to_campaign_monitor(webhook_data, user, donation_data, list_id)
