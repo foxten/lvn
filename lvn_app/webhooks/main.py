@@ -374,9 +374,9 @@ def process_piano_webhook(request):
                         donation_data["donation_amount"] = term.payment_billing_plan_table[0]["priceAndTax"]
                         donation_data["donation_frequency"] = term.payment_billing_plan_table[0]["period"]
                         if term.payment_billing_plan_table[0]["period"] is 'year':
-                            donation_data["donation_expiration"] = datetime.today() + relativedelta(years=1)
+                            donation_data["donation_expiration"] = (datetime.today() + relativedelta(years=1)).isoformat()
                         else: 
-                            donation_data["donation_expiration"] = datetime.today() + relativedelta(months = 1)
+                            donation_data["donation_expiration"] = (datetime.today() + relativedelta(months=1)).isoformat()
 
                     if Config.PIANO_ESP_PLUS_USERS_LIST:
                         add_to_piano_esp(user, donation_data, Config.PIANO_ESP_PLUS_USERS_LIST)
