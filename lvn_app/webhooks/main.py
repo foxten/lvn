@@ -240,7 +240,7 @@ def add_to_piano_esp(user, donation_data, list_id):
         else:
             print('Registering ' + user.email + ' to piano esp list ' + list_id + ' failed', file=sys.stderr)
             print(resp.content, file=sys.stderr)
-    if Config.PIANO_ESP_API_URL and is_subscribed_to_piano_esp(user.email, list_id):
+    if Config.PIANO_ESP_API_URL and is_subscribed_to_piano_esp(user.email, list_id) == True:
         print('Updating existing user ' + updated_user)
         add_piano_esp_merge_fields(updated_user)
 
