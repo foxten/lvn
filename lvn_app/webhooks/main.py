@@ -257,6 +257,7 @@ def get_subscribed_lists_piano_esp(email):
             )
             if subscribed_resp.ok:
                 subscribed_mlids.append(mlid)
+        print(subscribed_mlids)
         return subscribed_mlids
     return []
 
@@ -374,7 +375,7 @@ def process_piano_webhook(request):
                     # if webhook_data.event == 'new_purchase':
                     term = PIANO_CLIENT.publisher_term_api.get(term_id=webhook_data.term_id).data
                     donation_data["donated"] = True
-                    donation_data["donation_start"] = datetime.today()
+                    donation_data["donation_start"] = datetime.today().isoformat()
                     donation_data["donation_amount"] = term.payment_billing_plan_table[0]["priceAndTax"]
                     donation_data["donation_frequency"] = term.payment_billing_plan_table[0]["period"]
                     if term.payment_billing_plan_table[0]["period"] == "year":
